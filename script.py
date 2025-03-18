@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import re
 import sys
@@ -146,15 +147,32 @@ def main():
         print("File not found!")
         sys.exit(1)
 
-    print("File download method :")
-    print("1. aria2c (faster)")
-    print("2. wget")
-    print("3. Python downloader (windows)")
-    print("")
-    dl_method = input("(1/2/3) >> ").strip()
+    print("Option:")
+    print("1. download file")
+    print("2. only show direct url without download")
+    action = input("(1/2) >> ").strip()
 
     with open(input_file, "r") as f:
         links = f.read().splitlines()
+
+    if action == "2":
+        print("\nURL download:")
+        for link in links:
+            link = link.strip()
+            if not link:
+                continue
+
+            dl_url = getUrlDL(link)
+            if dl_url:
+                print(dl_url)
+        sys.exit(0)
+    
+    print("\nFile download method:")
+    print("1. aria2c (faster)")
+    print("2. curl")
+    print("3. python downloader")
+    print("")
+    dl_method = input("(1/2/3) >> ").strip()
 
     folder = input("Folder to save the file : ").strip()
     if not os.path.isdir(folder):
@@ -169,11 +187,9 @@ def main():
         if not dl_url:
             continue
 
-        # Tentukan nama file sesuai dengan domain
         if "datanodes.to" in link:
             filename = os.path.basename(link)
         elif "fuckingfast.co" in link:
-            # Untuk domain ini, ambil fragmen URL (bagian setelah '#' jika ada)
             parsed = urllib.parse.urlparse(link)
             filename = os.path.basename(parsed.fragment) if parsed.fragment else "downloaded_file"
         else:
@@ -185,7 +201,7 @@ def main():
         if dl_method == "1":
             subprocess.run(["aria2c", dl_url, "-o", output_path, "-x", "16", "-s", "16"])
         elif dl_method == "2":
-            subprocess.run(["wget", "-O", output_path, dl_url])
+            subprocess.run(["curl", "-o", output_path, dl_url])
         elif dl_method == "3":
             download_file(dl_url, output_path)
         else:
