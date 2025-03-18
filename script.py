@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import os
 import re
 import sys
@@ -8,7 +7,6 @@ import subprocess
 import requests
 from tqdm import tqdm
 
-# Definisikan logger sederhana agar tampilan progres lebih informatif
 class Log:
     colors = {
         'lightblack': '',
