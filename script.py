@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import os
 import re
 import sys
@@ -6,6 +5,49 @@ import json
 import urllib.parse
 import subprocess
 import requests
+from tqdm import tqdm
+
+# Definisikan logger sederhana agar tampilan progres lebih informatif
+class Log:
+    colors = {
+        'lightblack': '',
+        'lightblue': '',
+        'white': '',
+        'reset': ''
+    }
+    @staticmethod
+    def timestamp():
+        from datetime import datetime
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    @staticmethod
+    def success(message, detail):
+        print(f"[SUCCESS] {message}: {detail}")
+    @staticmethod
+    def error(message, detail):
+        print(f"[ERROR] {message}: {detail}")
+
+log = Log()
+
+def download_file(download_url, output_path):
+    response = requests.get(download_url, stream=True)
+    if response.status_code == 200:
+        total_size = int(response.headers.get('content-length', 0))
+        block_size = 8192
+
+        with open(output_path, 'wb') as f, tqdm(
+            total=total_size,
+            unit='B',
+            unit_scale=True,
+            unit_divisor=1024,
+        ) as bar:
+            for data in response.iter_content(block_size):
+                f.write(data)
+                bar.set_description(f"{log.colors['lightblack']}{log.timestamp()} » {log.colors['lightblue']}INFO {log.colors['lightblack']}• {log.colors['white']}Downloading -> {output_path[:15]}...{output_path[55:]} {log.colors['reset']}")
+                bar.update(len(data))
+
+        log.success("Successfully Downloaded File", f"{output_path[:35]}...{output_path[55:]}")
+    else:
+        log.error("Failed To Download File", response.status_code)
 
 def fetchUrl(url):
     headers = {
@@ -22,7 +64,7 @@ def fetchUrl(url):
         'Sec-Fetch-User': '?1',
         'Sec-GPC': '1',
         'Upgrade-Insecure-Requests': '1',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, seperti Gecko) Chrome/134.0.0.0 Safari/537.36'
     }
     try:
         r = requests.get(url, headers=headers, allow_redirects=True, timeout=30)
@@ -67,7 +109,7 @@ def getUrlDL(web):
             'Sec-Fetch-Mode': 'cors',
             'Sec-Fetch-Site': 'same-origin',
             'Sec-GPC': '1',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, seperti Gecko) Chrome/134.0.0.0 Safari/537.36'
         }
         try:
             r = requests.post(url, data=payload, headers=headers)
@@ -107,8 +149,9 @@ def main():
     print("File download method :")
     print("1. aria2c (faster)")
     print("2. wget")
+    print("3. Python downloader (windows)")
     print("")
-    dl_method = input("(1/2) >> ").strip()
+    dl_method = input("(1/2/3) >> ").strip()
 
     with open(input_file, "r") as f:
         links = f.read().splitlines()
@@ -143,6 +186,8 @@ def main():
             subprocess.run(["aria2c", dl_url, "-o", output_path, "-x", "16", "-s", "16"])
         elif dl_method == "2":
             subprocess.run(["wget", "-O", output_path, dl_url])
+        elif dl_method == "3":
+            download_file(dl_url, output_path)
         else:
             print("Download method not found.")
             sys.exit(1)
