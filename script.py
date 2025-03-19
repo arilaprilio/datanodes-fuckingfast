@@ -197,7 +197,7 @@ def main():
         print(f"Downloading {dl_url} to {output_path}")
 
         if dl_method == "1":
-            subprocess.run(["aria2c", dl_url, "-o", output_path, "-x", "16", "-s", "16"])
+            subprocess.run(["aria2c", dl_url, "-o", output_path])
         elif dl_method == "2":
             subprocess.run(["curl", "--progress-bar", "-o", output_path, dl_url])
         elif dl_method == "3":
